@@ -74,38 +74,40 @@ The extension popup shows live stats and recent activity. On the right, Claude s
 
 ## Before vs After
 
-### You open a new Claude session and ask: "Help me investigate this Teams outage"
+### "This TypeError keeps crashing my app. Can you help?"
+
+You've had four tabs open for an hour: a GitHub issue, a Stack Overflow thread, the React docs, and a migration guide. Claude has no idea.
 
 **Without Ambient MCP:**
-> Claude: "What's the incident ID? Which region? What tenant? Which logs have you checked? Can you paste an auth token?"
-> *(You spend the next 5 minutes copy-pasting context)*
+> Claude: "Can you share the error message? Which file? What framework? What have you already tried?"
+> *(You spend 5 minutes copy-pasting stack traces and explaining context you've already researched)*
 
 **With Ambient MCP:**
-> Claude calls `get_recent_context()` → sees ICM #759120401, your Geneva log tab, the related ADO work item, and a fresh Kusto token
-> Claude: *"I can see you've been on ICM #759120401 — Teams APAC delivery failure. You have a fresh Kusto token (52 min left). Let me query the incident timeline and check if ADO #98765 was deployed to APCPROD before this started."*
+> Claude calls `get_recent_context()` → sees GitHub issue #1089, your Stack Overflow tab about React 18 async timing, the React docs on useEffect cleanup, and a TanStack Query v5 migration guide
+> Claude: *"I can see exactly what you've been debugging. You've got a React 18 async race condition — your fetch resolves after the component unmounts. Quick fix: add an isMounted cleanup flag. Better fix: you were already reading the TanStack Query migration guide — switching to `useQuery` handles this automatically. Want me to show both?"*
 
 ---
 
 ### "Write a PR description for my changes"
 
 **Without Ambient MCP:**
-> Claude: "What repo? What issue does this fix? What changed?"
+> Claude: "What repo? What issue does this fix? What's the context?"
 
 **With Ambient MCP:**
-> Claude calls `get_pages_by_entity("ado_work_item")` → finds the bug you triaged, the PR you have open, the related work items
-> Claude: *"Based on work item #12345 you were reviewing and PR #678 you opened, here's a description that captures the full context..."*
+> Claude calls `get_pages_by_entity("github_issue")` → finds the bug report you read, the PR you have open, and the related issues you visited
+> Claude: *"Based on issue #1089 you were investigating and PR #234 you opened, here's a description that captures the full context..."*
 
 ---
 
-### "Make this API call for me"
+### "Deploy this to production"
 
 **Without Ambient MCP:**
-> Claude: "I'll need an auth token. Can you paste it here?"
+> Claude: "I'll need your Vercel token. Can you paste it?"
 
 **With Ambient MCP:**
-> Claude calls `check_token_for_domain("graph.microsoft.com")` → `{ valid: true, minsLeft: 47 }`
-> Claude calls `get_token_for_domain("graph.microsoft.com")` → uses your live token directly
-> Claude: *"Using your existing Graph token (47 minutes remaining)..."*
+> Claude calls `check_token_for_domain("vercel.com")` → `{ valid: true, minsLeft: 61 }`
+> Claude calls `get_token_for_domain("vercel.com")` → uses your live session token directly
+> Claude: *"Using your existing Vercel token (61 minutes remaining)..."*
 
 ---
 
@@ -115,8 +117,8 @@ The extension popup shows live stats and recent activity. On the right, Claude s
 > Claude: "I don't have visibility into what you worked on outside this conversation."
 
 **With Ambient MCP:**
-> Claude calls `get_recent_visits(limit=200)` → 45 min on ICM #750444345, 20 min on PR #98765, 30 min in Teams oncall channel
-> Claude: *"Today you focused on: (1) Incident #750444345 — Teams delivery failure in APAC. (2) Code review on PR #98765. (3) Oncall monitoring in SMBA channel. The incident took most of your time."*
+> Claude calls `get_recent_visits(limit=100)` → 40 min debugging the React TypeError, 25 min on code review, 20 min reading deployment docs
+> Claude: *"Today you spent most of your time on the undefined map() bug in your fetch logic. You also reviewed a PR and read through the Vercel deployment docs. The bug investigation is still open — want to pick up where you left off?"*
 
 ---
 
@@ -142,7 +144,7 @@ A live status dashboard in your browser toolbar. See pages captured, tokens stor
 | `get_recent_visits(limit?)` | Navigation timeline with time spent per page |
 
 **Entity types detected automatically:**
-`icm_incident` · `ado_work_item` · `ado_pr` · `ado_build` · `github_pr` · `github_issue` · `teams_meeting` · `teams_channel` · `outlook_email` · `outlook_calendar` · `azure_portal` · `geneva_logs` · `sharepoint` · `onedrive` · `wiki_page`
+`github_pr` · `github_issue` · `stackoverflow` · `npm_package` · `docs_page` · `jira_issue` · `linear_issue` · `notion_page` · `figma_file` · `confluence_page` · `teams_meeting` · `outlook_email` · `azure_portal` · `vercel_deployment` · `cloudflare_dashboard` · `aws_console` · `wiki_page`
 
 ---
 
