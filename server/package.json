@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "description": "Browser context for AI agents — captures browsing history, auth tokens, and page context via a Chrome extension and exposes them as MCP tools",
   "main": "server.js",
+  "bin": {
+    "ambient-mcp": "./bin/ambient-mcp.js"
+  },
+  "files": [
+    "server.js",
+    "store.js",
+    "bin/"
+  ],
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js"
