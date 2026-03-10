@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Ambient MCP",
   "version": "1.0.0",
-  "description": "Your browser becomes your AI's memory. Captures browsing history, auth tokens, and page context — streams everything to a local MCP server so AI agents have full awareness of your daily work.",
+  "description": "Your browser becomes your AI's memory. Captures pages, auth tokens, and context for AI agents via a local MCP server.",
   "permissions": [
     "storage",
     "tabs",
