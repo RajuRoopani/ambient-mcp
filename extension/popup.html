@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  width: 360px;
+  background: #f0f2f5;
+  color: #1b1b1b;
+}
+.header {
+  background: #1b1b1b;
+  color: #fff;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header h1 { font-size: 13px; font-weight: 600; flex: 1; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #8a8a8a; flex-shrink: 0; }
+.dot.ok { background: #107c10; }
+.dot.err { background: #c50f1f; }
+
+.body { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+.status-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  border-left: 3px solid #8a8a8a;
+}
+.status-card.ok { border-left-color: #107c10; }
+.status-card.err { border-left-color: #c50f1f; }
+.status-label { font-weight: 700; margin-bottom: 2px; }
+.status-sub { color: #616161; font-size: 11px; }
+code { font-family: Consolas, monospace; background: #f0f2f5; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+
+.section-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: #8a8a8a; padding: 0 2px;
+}
+
+.stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+}
+.stat-box {
+  background: #fff; border-radius: 8px; padding: 8px 10px; text-align: center;
+}
+.stat-num { font-size: 18px; font-weight: 700; color: #0078d4; }
+.stat-label { font-size: 10px; color: #8a8a8a; margin-top: 2px; }
+
+.token-list { display: flex; flex-direction: column; gap: 5px; }
+.token-card {
+  background: #fff; border-radius: 8px; padding: 9px 11px;
+  display: flex; align-items: center; gap: 8px; font-size: 12px;
+}
+.token-domain { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.token-user { font-size: 10px; color: #8a8a8a; }
+.badge {
+  display: inline-block; padding: 1px 7px; border-radius: 100px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+}
+.badge-fresh { background: #e6f4ea; color: #107c10; }
+.badge-expired { background: #fde7e9; color: #c50f1f; }
+.badge-refreshed { background: #e8f4fd; color: #0078d4; }
+.badge-unknown { background: #f0f2f5; color: #8a8a8a; }
+
+.empty { color: #8a8a8a; font-size: 12px; text-align: center; padding: 12px; }
+
+.actions { display: flex; gap: 6px; }
+button {
+  flex: 1; padding: 7px 10px; border-radius: 6px;
+  font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid;
+}
+.btn-primary { background: #0078d4; color: #fff; border-color: #0078d4; }
+.btn-primary:hover { background: #106ebe; }
+.btn-secondary { background: #fff; color: #1b1b1b; border-color: #d0d7de; }
+.btn-secondary:hover { background: #f0f2f5; }
+.btn-danger { background: #c50f1f; color: #fff; border-color: #c50f1f; }
+.btn-danger:hover { background: #a80000; }
+
+.recent-list { display: flex; flex-direction: column; gap: 5px; }
+.recent-card {
+  background: #fff; border-radius: 8px; padding: 9px 11px; font-size: 12px;
+}
+.recent-title { font-weight: 600; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-meta { font-size: 10px; color: #8a8a8a; }
+.entity-badge {
+  display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase;
+  padding: 0px 5px; border-radius: 3px; background: #e8f4fd; color: #0078d4; margin-right: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60cdff" stroke-width="2.5">
+    <circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/>
+    <path d="M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>
+  </svg>
+  <h1>Browser Context MCP</h1>
+  <div class="dot" id="server-dot"></div>
+</div>
+
+<div class="body">
+
+  <div class="status-card" id="server-card">
+    <div class="status-label" id="server-status">Checking server…</div>
+    <div class="status-sub" id="server-sub"></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num" id="stat-tokens">—</div>
+      <div class="stat-label">Tokens</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-pages">—</div>
+      <div class="stat-label">Pages</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-visits">—</div>
+      <div class="stat-label">Visits</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-primary" id="btn-flush">↑ Flush Now</button>
+    <button class="btn-secondary" id="btn-open">Open Server →</button>
+    <button class="btn-danger" id="btn-clear">Clear</button>
+  </div>
+
+  <div class="section-label">Auth Tokens</div>
+  <div class="token-list" id="token-list">
+    <div class="empty">No tokens captured yet.</div>
+  </div>
+
+  <div class="section-label">Recent Pages</div>
+  <div class="recent-list" id="recent-list">
+    <div class="empty">No pages captured yet.</div>
+  </div>
+
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

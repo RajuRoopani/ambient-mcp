@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Browser Context MCP",
+  "version": "1.0.0",
+  "description": "Captures browsing history, auth tokens, and page context — tunnels everything to a local MCP server so AI agents have full awareness of your daily work.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "webNavigation",
+    "webRequest",
+    "notifications",
+    "scripting",
+    "activeTab",
+    "alarms"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Browser Context MCP",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}
