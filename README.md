@@ -3,10 +3,16 @@
 > **Your browser becomes your AI's memory.**
 > Every page you visit, every auth token you hold, every minute you spend — all of it becomes searchable, queryable context for your AI agents.
 
-[![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue?logo=anthropic)](https://modelcontextprotocol.io)
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Manifest%20V3-green?logo=googlechrome)](https://developer.chrome.com/docs/extensions/mv3/)
-[![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen?logo=nodedotjs)](https://nodejs.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/ambient-mcp.svg?style=flat-square&logo=npm&color=cb3837)](https://www.npmjs.com/package/ambient-mcp)
+[![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue?style=flat-square&logo=anthropic)](https://modelcontextprotocol.io)
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Manifest%20V3-green?style=flat-square&logo=googlechrome)](https://developer.chrome.com/docs/extensions/mv3/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen?style=flat-square&logo=nodedotjs)](https://nodejs.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+[![Privacy](https://img.shields.io/badge/Privacy-Local%20Only-purple?style=flat-square)](PRIVACY.md)
+
+---
+
+![Ambient MCP Hero](docs/screenshot1-hero.png)
 
 ---
 
@@ -47,11 +53,19 @@ You end up copy-pasting context, re-explaining your work, and re-authenticating 
                     │                                          │
                     │  get_recent_context()  ─► "User was just│
                     │  search_context("ICM")  ─► viewing ICM  │
-                    │  check_token_health()   ─► 759120401..."  │
+                    │  check_token_health()   ─► 759120401..." │
                     │  get_auth_tokens()      ─► Token: fresh, │
                     │                            47 min left   │
                     └──────────────────────────────────────────┘
 ```
+
+---
+
+## Extension Popup
+
+![Popup Preview](docs/popup-preview.png)
+
+The extension popup shows live stats — pages captured, tokens stored, fresh token count — with recent page activity and auth token status at a glance.
 
 ---
 
@@ -178,104 +192,59 @@ Navigation history with time spent per page — understand the user's work timel
 
 ---
 
-## Architecture
-
-```
-browser-context-mcp/
-├── extension/               # Chrome Extension (MV3)
-│   ├── manifest.json        # Permissions: webRequest, alarms, notifications, scripting
-│   ├── background.js        # Service worker: token capture, visit tracking, expiry alerts
-│   ├── content.js           # Page context extraction, entity detection, SPA support
-│   ├── popup.html           # Status dashboard UI
-│   └── popup.js             # Real-time health display, manual flush/clear
-│
-└── server/                  # Node.js MCP Server
-    ├── server.js            # Dual-protocol: HTTP :3457 (ingest) + MCP stdio (agent tools)
-    ├── store.js             # In-memory store with JSON persistence + TTL pruning
-    └── package.json         # Single dependency: express
-```
-
-### Data Flow
-
-```
-1. You visit a page
-   └─► content.js extracts: title, text, entity type, GUIDs, headings, related links
-       └─► background.js sends: POST /ingest/page
-
-2. You make a request to an API (Azure, GitHub, Outlook, etc.)
-   └─► background.js intercepts: Authorization header
-       └─► Decodes JWT, extracts: user, expiry, audience, scopes
-           └─► background.js sends: POST /ingest/tokens
-
-3. Every 15 seconds: visit batch flushed → POST /ingest/visits
-
-4. Every 30 seconds: token expiry check → browser notification if expiring in <5 min
-
-5. AI agent receives a message
-   └─► Calls MCP tools via stdio JSON-RPC
-       └─► Server queries in-memory store
-           └─► Returns structured context to agent
-```
-
-### Persistence
-
-All data persists to `~/.claude/browser-context-mcp/store.json` — a **shared location** across all your Claude Code projects. One token store, one page history, available everywhere.
-
----
-
 ## Installation
 
-### Step 1: Install the MCP Server
+### Step 1: Start the MCP Server (zero install)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ambient-mcp.git
-cd ambient-mcp/server
-npm install
+npx ambient-mcp
 ```
+
+That's it. No git clone, no `npm install`. The server starts on port 3457 and persists data to `~/.claude/browser-context-mcp/store.json`.
+
+> **Requires Node.js 18+**
 
 ### Step 2: Register with Claude Code
 
-Add to your `.mcp.json` (in your project root or `~/.claude/mcp.json` for global):
+Add to your `.mcp.json` (project root) or `~/.claude/mcp.json` (global):
 
 ```json
 {
   "mcpServers": {
     "browser-context": {
-      "command": "node",
-      "args": ["/path/to/ambient-mcp/server/server.js"]
+      "command": "npx",
+      "args": ["ambient-mcp"]
     }
   }
 }
 ```
 
-Or if you cloned inside your Claude project root:
-```json
-{
-  "mcpServers": {
-    "browser-context": {
-      "command": "node",
-      "args": ["./ambient-mcp/server/server.js"]
-    }
-  }
-}
-```
-
-Restart Claude Code — the `browser-context` MCP server will start automatically.
+Restart Claude Code — the `browser-context` MCP server starts automatically.
 
 ### Step 3: Install the Chrome Extension
 
-1. Open Chrome → `chrome://extensions`
-2. Enable **Developer mode** (top-right toggle)
-3. Click **Load unpacked**
-4. Select the `extension/` folder from this repo
+1. Clone this repo (for the extension files):
+   ```bash
+   git clone https://github.com/RajuRoopani/ambient-mcp.git
+   ```
+2. Open Chrome → `chrome://extensions`
+3. Enable **Developer mode** (top-right toggle)
+4. Click **Load unpacked**
+5. Select the `extension/` folder
 
-The extension icon will appear in your toolbar. Click it to see the status dashboard.
+The extension icon appears in your toolbar. Click it to see the live status dashboard.
 
 ### Step 4: Browse Normally
 
 Visit any page — Microsoft Teams, ICM, Azure DevOps, GitHub, Outlook, Azure Portal. The extension silently captures context in the background. The popup shows a live count of tokens, pages, and visits captured.
 
 **First capture takes ~15 seconds** (the flush interval). After that, every new page is available to your AI agent instantly.
+
+---
+
+## Agent Context Example
+
+![Agent using browser context](docs/screenshot2-agent.png)
 
 ---
 
@@ -312,19 +281,48 @@ Once your extension has captured a few pages, ask Claude Code:
 
 ---
 
-## Configuration
+## Architecture
 
-All settings are in `server/store.js` constants:
+```
+browser-context-mcp/
+├── extension/               # Chrome Extension (MV3)
+│   ├── manifest.json        # Permissions: webRequest, alarms, notifications, scripting
+│   ├── background.js        # Service worker: token capture, visit tracking, expiry alerts
+│   ├── content.js           # Page context extraction, entity detection, SPA support
+│   ├── popup.html           # Status dashboard UI (dark purple/indigo theme)
+│   └── popup.js             # Real-time health display, manual flush/clear
+│
+└── server/                  # Node.js MCP Server (published to npm as `ambient-mcp`)
+    ├── server.js            # Dual-protocol: HTTP :3457 (ingest) + MCP stdio (agent tools)
+    ├── store.js             # In-memory store with JSON persistence + TTL pruning
+    └── package.json         # Zero dependencies (pure Node.js)
+```
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `HISTORY_TTL_DAYS` | `5` | Pages and visits older than this are pruned |
-| `EXPIRED_TOKEN_TTL_HOURS` | `24` | Expired tokens removed after this grace period |
-| `MAX_PAGES` | `500` | Hard cap on stored pages |
-| `MAX_VISITS` | `2000` | Hard cap on stored visits |
-| `PRUNE_INTERVAL_MS` | `3600000` | How often auto-prune runs (1 hour) |
+### Data Flow
 
-The extension flush interval (15s) and expiry check interval (30s) are in `extension/background.js`.
+```
+1. You visit a page
+   └─► content.js extracts: title, text, entity type, GUIDs, headings, related links
+       └─► background.js sends: POST /ingest/page
+
+2. You make a request to an API (Azure, GitHub, Outlook, etc.)
+   └─► background.js intercepts: Authorization header
+       └─► Decodes JWT, extracts: user, expiry, audience, scopes
+           └─► background.js sends: POST /ingest/tokens
+
+3. Every 15 seconds: visit batch flushed → POST /ingest/visits
+
+4. Every 30 seconds: token expiry check → browser notification if expiring in <5 min
+
+5. AI agent receives a message
+   └─► Calls MCP tools via stdio JSON-RPC
+       └─► Server queries in-memory store
+           └─► Returns structured context to agent
+```
+
+### Persistence
+
+All data persists to `~/.claude/browser-context-mcp/store.json` — a **shared location** across all your Claude Code projects. One token store, one page history, available everywhere.
 
 ---
 
@@ -365,6 +363,22 @@ if graph and graph["status"] == "fresh":
 
 ---
 
+## Configuration
+
+All settings are in `server/store.js` constants:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `HISTORY_TTL_DAYS` | `5` | Pages and visits older than this are pruned |
+| `EXPIRED_TOKEN_TTL_HOURS` | `24` | Expired tokens removed after this grace period |
+| `MAX_PAGES` | `500` | Hard cap on stored pages |
+| `MAX_VISITS` | `2000` | Hard cap on stored visits |
+| `PRUNE_INTERVAL_MS` | `3600000` | How often auto-prune runs (1 hour) |
+
+The extension flush interval (15s) and expiry check interval (30s) are in `extension/background.js`.
+
+---
+
 ## Privacy & Security
 
 ### Data Stays Local
@@ -381,6 +395,8 @@ if graph and graph["status"] == "fresh":
 - Store file contains **plaintext tokens** — protect it like you would `.env` files
 - Add `~/.claude/browser-context-mcp/store.json` to your backup exclusions if desired
 - Tokens auto-expire following their JWT `exp` claim and are pruned after 24h
+
+Read the full [Privacy Policy](PRIVACY.md).
 
 ### gitignore
 The store file is excluded by default — tokens are **never committed to git**.
